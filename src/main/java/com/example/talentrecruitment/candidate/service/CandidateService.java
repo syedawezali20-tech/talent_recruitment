@@ -11,7 +11,15 @@ public interface CandidateService {
 
     CandidateResponse getCandidateById(Long id);
 
-    Page<CandidateResponse> getAllCandidates(String skill, String status, Pageable pageable);
+    Page<CandidateResponse> getAllCandidates(
+            String firstName,
+            String lastName,
+            String email,
+            String phone,
+            String skill,
+            Integer experience,
+            String status,
+            Pageable pageable);
 
     CandidateResponse updateCandidate(Long id, CandidateRequest request);
 
