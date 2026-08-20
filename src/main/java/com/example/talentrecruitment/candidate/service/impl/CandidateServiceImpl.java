@@ -26,7 +26,15 @@ public class CandidateServiceImpl implements CandidateService {
     @Override
     public CandidateResponse createCandidate(CandidateRequest request) {
 
+        log.info("Starting candidate creation for email: {}",
+                request.getEmail());
+
         if (candidateRepository.existsByEmail(request.getEmail())) {
+
+            log.warn(
+                    "Candidate creation failed - email already exists: {}",
+                    request.getEmail());
+
             throw new BadRequestException(
                     "Candidate with this email already exists");
         }
@@ -49,7 +57,7 @@ public class CandidateServiceImpl implements CandidateService {
         Candidate savedCandidate = candidateRepository.save(candidate);
 
         log.info(
-                "Created candidate with id {}",
+                "Created candidate successfully with id: {}",
                 savedCandidate.getId());
 
         return mapToResponse(savedCandidate);
@@ -58,10 +66,22 @@ public class CandidateServiceImpl implements CandidateService {
     @Override
     public CandidateResponse getCandidateById(Long id) {
 
+        log.info("Fetching candidate with id: {}", id);
+
         Candidate candidate = candidateRepository.findById(id)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException(
-                                "Candidate not found with id: " + id));
+                .orElseThrow(() -> {
+
+                    log.warn(
+                            "Candidate not found with id: {}",
+                            id);
+
+                    return new ResourceNotFoundException(
+                            "Candidate not found with id: " + id);
+                });
+
+        log.info(
+                "Candidate found successfully with id: {}",
+                id);
 
         return mapToResponse(candidate);
     }
@@ -81,15 +101,41 @@ public class CandidateServiceImpl implements CandidateService {
             String status,
             Pageable pageable) {
 
+        log.info(
+                "Starting candidate search - firstName: {}, lastName: {}, skill: {}, experience: {}, status: {}",
+                firstName,
+                lastName,
+                skill,
+                experience,
+                status);
+
+        // DEBUG LOGGING
+        log.debug(
+                "Search pagination - page: {}, size: {}",
+                pageable.getPageNumber(),
+                pageable.getPageSize());
+
+        log.debug(
+                "Search sorting - sort: {}",
+                pageable.getSort());
+
         CandidateStatus candidateStatus = null;
 
         // Convert status String to CandidateStatus safely
         if (status != null && !status.isBlank()) {
+
             try {
+
                 candidateStatus =
                         CandidateStatus.valueOf(
                                 status.trim().toUpperCase());
+
             } catch (IllegalArgumentException ex) {
+
+                log.warn(
+                        "Invalid candidate status received: {}",
+                        status);
+
                 throw new BadRequestException(
                         "Invalid candidate status: " + status);
             }
@@ -113,12 +159,9 @@ public class CandidateServiceImpl implements CandidateService {
                         pageable);
 
         log.info(
-                "Candidate search executed - firstName: {}, lastName: {}, skill: {}, experience: {}, status: {}",
-                firstName,
-                lastName,
-                skill,
-                experience,
-                status);
+                "Candidate search completed successfully - results: {}, total: {}",
+                candidates.getNumberOfElements(),
+                candidates.getTotalElements());
 
         return candidates.map(this::mapToResponse);
     }
@@ -128,13 +171,27 @@ public class CandidateServiceImpl implements CandidateService {
             Long id,
             CandidateRequest request) {
 
+        log.info(
+                "Starting update for candidate with id: {}",
+                id);
+
         Candidate candidate = candidateRepository.findById(id)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException(
-                                "Candidate not found with id: " + id));
+                .orElseThrow(() -> {
+
+                    log.warn(
+                            "Cannot update candidate - candidate not found with id: {}",
+                            id);
+
+                    return new ResourceNotFoundException(
+                            "Candidate not found with id: " + id);
+                });
 
         if (!candidate.getEmail().equalsIgnoreCase(request.getEmail())
                 && candidateRepository.existsByEmail(request.getEmail())) {
+
+            log.warn(
+                    "Candidate update failed - email already exists: {}",
+                    request.getEmail());
 
             throw new BadRequestException(
                     "Candidate with this email already exists");
@@ -162,7 +219,7 @@ public class CandidateServiceImpl implements CandidateService {
                 candidateRepository.save(candidate);
 
         log.info(
-                "Updated candidate with id {}",
+                "Candidate updated successfully with id: {}",
                 updatedCandidate.getId());
 
         return mapToResponse(updatedCandidate);
@@ -171,15 +228,25 @@ public class CandidateServiceImpl implements CandidateService {
     @Override
     public void deleteCandidate(Long id) {
 
+        log.info(
+                "Starting deletion for candidate with id: {}",
+                id);
+
         Candidate candidate = candidateRepository.findById(id)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException(
-                                "Candidate not found with id: " + id));
+                .orElseThrow(() -> {
+
+                    log.warn(
+                            "Cannot delete candidate - candidate not found with id: {}",
+                            id);
+
+                    return new ResourceNotFoundException(
+                            "Candidate not found with id: " + id);
+                });
 
         candidateRepository.delete(candidate);
 
         log.info(
-                "Deleted candidate with id {}",
+                "Candidate deleted successfully with id: {}",
                 id);
     }
 
