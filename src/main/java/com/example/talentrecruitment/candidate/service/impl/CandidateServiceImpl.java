@@ -68,16 +68,7 @@ public class CandidateServiceImpl implements CandidateService {
 
         log.info("Fetching candidate with id: {}", id);
 
-        Candidate candidate = candidateRepository.findById(id)
-                .orElseThrow(() -> {
-
-                    log.warn(
-                            "Candidate not found with id: {}",
-                            id);
-
-                    return new ResourceNotFoundException(
-                            "Candidate not found with id: " + id);
-                });
+        Candidate candidate = findCandidateById(id);
 
         log.info(
                 "Candidate found successfully with id: {}",
@@ -85,10 +76,6 @@ public class CandidateServiceImpl implements CandidateService {
 
         return mapToResponse(candidate);
     }
-
-    // ============================================================
-    // ADVANCED SEARCH WITH DYNAMIC FILTERING
-    // ============================================================
 
     @Override
     public Page<CandidateResponse> getAllCandidates(
@@ -109,7 +96,6 @@ public class CandidateServiceImpl implements CandidateService {
                 experience,
                 status);
 
-        // DEBUG LOGGING
         log.debug(
                 "Search pagination - page: {}, size: {}",
                 pageable.getPageNumber(),
@@ -121,11 +107,9 @@ public class CandidateServiceImpl implements CandidateService {
 
         CandidateStatus candidateStatus = null;
 
-        // Convert status String to CandidateStatus safely
         if (status != null && !status.isBlank()) {
 
             try {
-
                 candidateStatus =
                         CandidateStatus.valueOf(
                                 status.trim().toUpperCase());
@@ -141,7 +125,6 @@ public class CandidateServiceImpl implements CandidateService {
             }
         }
 
-        // Build dynamic specification
         Specification<Candidate> specification =
                 Specification.where(
                         CandidateSpecification.hasFirstName(firstName))
@@ -152,7 +135,6 @@ public class CandidateServiceImpl implements CandidateService {
                         .and(CandidateSpecification.hasExperience(experience))
                         .and(CandidateSpecification.hasStatus(candidateStatus));
 
-        // Execute dynamic query with pagination and sorting
         Page<Candidate> candidates =
                 candidateRepository.findAll(
                         specification,
@@ -175,16 +157,7 @@ public class CandidateServiceImpl implements CandidateService {
                 "Starting update for candidate with id: {}",
                 id);
 
-        Candidate candidate = candidateRepository.findById(id)
-                .orElseThrow(() -> {
-
-                    log.warn(
-                            "Cannot update candidate - candidate not found with id: {}",
-                            id);
-
-                    return new ResourceNotFoundException(
-                            "Candidate not found with id: " + id);
-                });
+        Candidate candidate = findCandidateById(id);
 
         if (!candidate.getEmail().equalsIgnoreCase(request.getEmail())
                 && candidateRepository.existsByEmail(request.getEmail())) {
@@ -232,22 +205,27 @@ public class CandidateServiceImpl implements CandidateService {
                 "Starting deletion for candidate with id: {}",
                 id);
 
-        Candidate candidate = candidateRepository.findById(id)
-                .orElseThrow(() -> {
-
-                    log.warn(
-                            "Cannot delete candidate - candidate not found with id: {}",
-                            id);
-
-                    return new ResourceNotFoundException(
-                            "Candidate not found with id: " + id);
-                });
+        Candidate candidate = findCandidateById(id);
 
         candidateRepository.delete(candidate);
 
         log.info(
                 "Candidate deleted successfully with id: {}",
                 id);
+    }
+
+    private Candidate findCandidateById(Long id) {
+
+        return candidateRepository.findById(id)
+                .orElseThrow(() -> {
+
+                    log.warn(
+                            "Candidate not found with id: {}",
+                            id);
+
+                    return new ResourceNotFoundException(
+                            "Candidate not found with id: " + id);
+                });
     }
 
     private CandidateResponse mapToResponse(
