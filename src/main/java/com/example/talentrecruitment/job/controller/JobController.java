@@ -1,6 +1,7 @@
 package com.example.talentrecruitment.job.controller;
 
 import com.example.talentrecruitment.common.ApiResponse;
+import com.example.talentrecruitment.common.exception.BadRequestException;
 import com.example.talentrecruitment.job.dto.JobRequest;
 import com.example.talentrecruitment.job.dto.JobResponse;
 import com.example.talentrecruitment.job.service.JobService;
@@ -19,6 +20,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Set;
 
 @RestController
 @RequestMapping("/api/jobs")
@@ -90,40 +93,85 @@ public class JobController {
     })
     public ResponseEntity<ApiResponse<Object>> getAllJobs(
 
-            @Parameter(description = "Filter jobs by department", example = "IT")
+            @Parameter(
+                    description = "Filter jobs by department",
+                    example = "IT"
+            )
             @RequestParam(required = false)
             String department,
 
-            @Parameter(description = "Filter jobs by location", example = "Hyderabad")
+            @Parameter(
+                    description = "Filter jobs by location",
+                    example = "Hyderabad"
+            )
             @RequestParam(required = false)
             String location,
 
-            @Parameter(description = "Filter jobs by status", example = "OPEN")
+            @Parameter(
+                    description = "Filter jobs by status",
+                    example = "OPEN"
+            )
             @RequestParam(required = false)
             String status,
 
-            @Parameter(description = "Page number starting from 0", example = "0")
+            @Parameter(
+                    description = "Page number starting from 0",
+                    example = "0"
+            )
             @RequestParam(defaultValue = "0")
             int page,
 
-            @Parameter(description = "Number of records per page", example = "10")
+            @Parameter(
+                    description = "Number of records per page",
+                    example = "10"
+            )
             @RequestParam(defaultValue = "10")
             int size,
 
-            @Parameter(description = "Field used for sorting", example = "createdAt")
+            @Parameter(
+                    description = "Field used for sorting",
+                    example = "createdAt"
+            )
             @RequestParam(defaultValue = "createdAt")
             String sortBy,
 
-            @Parameter(description = "Sort direction: asc or desc", example = "desc")
+            @Parameter(
+                    description = "Sort direction: asc or desc",
+                    example = "desc"
+            )
             @RequestParam(defaultValue = "desc")
             String direction
     ) {
+
+        Set<String> allowedSortFields = Set.of(
+                "id",
+                "title",
+                "department",
+                "location",
+                "experienceRequired",
+                "employmentType",
+                "status",
+                "createdAt",
+                "updatedAt"
+        );
+
+        if (!allowedSortFields.contains(sortBy)) {
+            throw new BadRequestException(
+                    "Invalid sort field: " + sortBy);
+        }
+
+        if (!direction.equalsIgnoreCase("asc")
+                && !direction.equalsIgnoreCase("desc")) {
+            throw new BadRequestException(
+                    "Invalid sort direction: " + direction);
+        }
 
         Sort sort = direction.equalsIgnoreCase("desc")
                 ? Sort.by(sortBy).descending()
                 : Sort.by(sortBy).ascending();
 
-        Pageable pageable = PageRequest.of(page, size, sort);
+        Pageable pageable =
+                PageRequest.of(page, size, sort);
 
         Page<JobResponse> result =
                 jobService.getAllJobs(
@@ -169,7 +217,10 @@ public class JobController {
     })
     public ResponseEntity<ApiResponse<JobResponse>> getJobById(
 
-            @Parameter(description = "Unique job ID", example = "1")
+            @Parameter(
+                    description = "Unique job ID",
+                    example = "1"
+            )
             @PathVariable Long id) {
 
         JobResponse response = jobService.getJobById(id);
@@ -210,7 +261,10 @@ public class JobController {
     })
     public ResponseEntity<ApiResponse<JobResponse>> updateJob(
 
-            @Parameter(description = "Unique job ID", example = "1")
+            @Parameter(
+                    description = "Unique job ID",
+                    example = "1"
+            )
             @PathVariable Long id,
 
             @Valid @RequestBody JobRequest request) {
@@ -249,7 +303,10 @@ public class JobController {
     })
     public ResponseEntity<ApiResponse<Void>> deleteJob(
 
-            @Parameter(description = "Unique job ID", example = "1")
+            @Parameter(
+                    description = "Unique job ID",
+                    example = "1"
+            )
             @PathVariable Long id) {
 
         jobService.deleteJob(id);
