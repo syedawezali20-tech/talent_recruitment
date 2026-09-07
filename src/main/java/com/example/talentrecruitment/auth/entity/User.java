@@ -41,4 +41,21 @@ public class User {
     @CreationTimestamp
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
+
+    @Column(unique = true)
+    private String googleId;
+
+    @Column(name = "auth_provider")
+    private String authProvider;
+
+    // ============================================================
+    // BRUTE-FORCE PROTECTION
+    // ============================================================
+
+    @Column(nullable = false)
+    @Builder.Default
+    private int failedLoginAttempts = 0;
+
+    @Column
+    private LocalDateTime accountLockedUntil;
 }

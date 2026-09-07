@@ -1,230 +1,370 @@
-mvn clean test# Talent Recruitment API
+# Talent Recruitment API
 
 A production-style Spring Boot backend for an HRMS Talent & Recruitment module.
 
+The application provides secure REST APIs for managing candidates, jobs, recruiter authentication, candidate registration, password management, Google OAuth2 authentication, JWT-based authentication, refresh-token sessions, application health monitoring, and structured application logging.
+
+---
+
 ## Overview
-This project provides a clean, secure REST API for managing candidates, jobs, and recruiter authentication using Spring Boot 3, Spring Security, JWT, and MySQL.
+
+This project is the backend API for the Talent & Recruitment module of an HRMS application.
+
+The backend is built using Spring Boot 3.3.2 and follows a layered architecture separating controllers, services, repositories, entities, DTOs, security, configuration, and exception handling.
+
+The application uses PostgreSQL as the database and Spring Security for authentication and authorization.
+
+---
 
 ## Features
-- JWT-based authentication and authorization
-- Role-based access control for ADMIN, HR, and RECRUITER
-- Candidate CRUD with search and pagination
-- Job CRUD with search and pagination
-- Bean Validation
-- Global exception handling
-- Swagger/OpenAPI documentation
-- MySQL integration with Spring Data JPA
-- JUnit 5 and Mockito tests
 
-## Technology Stack
+### Authentication and Security
+
+- JWT-based authentication and authorization
+- Role-based access control
+- ADMIN, HR, RECRUITER, and CANDIDATE roles
+- BCrypt password hashing
+- Google OAuth2 authentication
+- Refresh-token based session management
+- Refresh-token rotation
+- Server-side refresh-session revocation
+- Logout
+- Logout from all sessions
+- Password reset using email
+- Password change
+- Password reset token expiration
+- Account lockout after repeated failed login attempts
+- Stateless Spring Security configuration
+- CORS configuration
+
+### Candidate Management
+
+- Candidate registration
+- Candidate login account creation
+- Candidate profile creation
+- Candidate CRUD operations
+- Candidate search
+- Candidate filtering
+- Candidate pagination
+- Candidate status management
+
+### Job Management
+
+- Job CRUD operations
+- Job search
+- Job filtering
+- Job pagination
+- Department filtering
+- Location filtering
+- Job status filtering
+- Employment type management
+
+### Validation and Error Handling
+
+- Bean Validation
+- Password policy validation
+- Global exception handling
+- Standardized API responses
+- JWT exception handling
+- Authentication error handling
+- Access denied handling
+- Resource not found handling
+
+### Monitoring and Production Readiness
+
+- Spring Boot Actuator
+- Health endpoint
+- Application information endpoint
+- Structured JSON logging
+- Log file rotation
+- Development profile
+- Test profile
+- Production profile
+- Environment-variable based configuration
+- Externalized database credentials
+- Externalized JWT secret
+- Externalized Google OAuth credentials
+- Externalized email credentials
+
+### Documentation and Testing
+
+- Swagger/OpenAPI documentation
+- JUnit 5
+- Mockito
+- Maven test lifecycle
+
+---
+
+# Technology Stack
+
 - Java 17
 - Spring Boot 3.3.2
 - Maven
 - Spring Web
 - Spring Data JPA
 - Hibernate
-- MySQL
+- PostgreSQL
 - Spring Security
-- JWT (jjwt)
+- JWT (JJWT)
+- Google OAuth2
+- Spring Boot Actuator
+- Spring Boot Mail
 - Bean Validation
 - Lombok
 - Springdoc OpenAPI
+- Logback
+- Logstash Logback Encoder
 - JUnit 5
 - Mockito
 
-## Project Architecture
-The application follows a layered architecture:
-- controller: REST endpoints
-- service: business logic
-- service.impl: concrete implementations
-- repository: persistence logic
-- entity: JPA persistence entities
-- dto: request/response payloads
-- security: JWT configuration and authentication handling
-- exception: global error handling
-- config: OpenAPI and security configuration
+---
 
-## Package Structure
+# Project Architecture
+
+The application follows a layered architecture.
+
 ```text
-com.example.talentrecruitment
-├── auth
-│   ├── controller
-│   ├── dto
-│   ├── entity
-│   ├── repository
-│   └── service
-├── candidate
-│   ├── controller
-│   ├── dto
-│   ├── entity
-│   ├── repository
-│   └── service
-├── common
-│   ├── exception
-│   └── ApiResponse.java
-├── config
-├── job
-│   ├── controller
-│   ├── dto
-│   ├── entity
-│   ├── repository
-│   └── service
-├── security
-├── TalentRecruitmentApplication.java
-└── resources
-    └── application.properties
-```
+Controller
+    |
+    v
+Service
+    |
+    v
+Repository
+    |
+    v
+Database# Talent Recruitment API
 
-## Database Configuration
-Create a MySQL database named `talent_recruitment_db`.
+A production-ready Spring Boot backend for the Talent & Recruitment module of an HRMS application.
 
-Example:
-```sql
-CREATE DATABASE talent_recruitment_db;
-```
+The application provides APIs for authentication, authorization, candidate management, job management, password management, Google OAuth2 authentication, JWT authentication, refresh-token sessions, application monitoring, structured logging, and environment-based configuration.
 
-Set environment variables before running the app:
-```bash
-export DB_URL=jdbc:mysql://localhost:3306/talent_recruitment_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
-export DB_USERNAME=root
-export DB_PASSWORD=password
-export JWT_SECRET=your-super-secret-key-should-be-long-enough
-```
+---
 
-Application configuration is in `src/main/resources/application.properties`.
+## Table of Contents
 
-## How to Run
-1. Ensure MySQL is running.
-2. Create the database.
-3. Set the required environment variables.
-4. Run:
+1. Project Overview
+2. Features
+3. Technology Stack
+4. Project Structure
+5. Application Architecture
+6. Authentication Flow
+7. JWT Authentication
+8. Refresh Token and Session Management
+9. Logout
+10. Password Security
+11. Account Lockout
+12. Forgot Password
+13. Change Password
+14. Google OAuth2
+15. Candidate Registration
+16. Candidate Management
+17. Job Management
+18. API Endpoints
+19. Database Configuration
+20. Environment Variables
+21. Application Profiles
+22. Development Configuration
+23. Test Configuration
+24. Production Configuration
+25. Structured Logging
+26. Log Files
+27. Sensitive Information Logging Policy
+28. Spring Boot Actuator
+29. Swagger / OpenAPI
+30. CORS Configuration
+31. Running the Application
+32. Running Tests
+33. Building the Application
+34. Frontend Integration
+35. Git Workflow
+36. Production Security Checklist
+37. Future Enhancements
+38. License
 
-```bash
-mvn clean install
-mvn spring-boot:run
-```
+---
 
-## Authentication Flow
-1. Register a user using `POST /api/auth/register`.
-2. Login using `POST /api/auth/login`.
-3. Receive a JWT token.
-4. Include the token in the `Authorization` header as `Bearer <token>` for protected endpoints.
+# 1. Project Overview
 
-## API Endpoints
-### Authentication
-- `POST /api/auth/register`
-- `POST /api/auth/login`
+The Talent Recruitment API is the backend service for the Talent & Recruitment module of an HRMS application.
 
-### Candidate
-- `POST /api/candidates`
-- `GET /api/candidates`
-- `GET /api/candidates/{id}`
-- `PUT /api/candidates/{id}`
-- `DELETE /api/candidates/{id}`
+The backend is developed using Spring Boot and provides REST APIs that allow users such as candidates, recruiters, HR users, and administrators to interact with the recruitment system.
 
-### Job
-- `POST /api/jobs`
-- `GET /api/jobs`
-- `GET /api/jobs/{id}`
-- `PUT /api/jobs/{id}`
-- `DELETE /api/jobs/{id}`
+The application supports:
 
-## Example Requests
-### Register
-```json
-{
-  "username": "recruiter",
-  "email": "recruiter@example.com",
-  "password": "secret123",
-  "role": "RECRUITER"
-}
-```
+- User authentication
+- Candidate registration
+- Candidate management
+- Job management
+- JWT authentication
+- Refresh-token sessions
+- Google OAuth2 authentication
+- Password reset
+- Password change
+- Account lockout
+- Role-based authorization
+- Validation
+- Global exception handling
+- Structured logging
+- Application health monitoring
+- Environment-specific configuration
 
-### Login
-```json
-{
-  "usernameOrEmail": "recruiter",
-  "password": "secret123"
-}
-```
+---
 
-### Create Candidate
-```json
-{
-  "firstName": "Jane",
-  "lastName": "Doe",
-  "email": "jane.doe@example.com",
-  "phone": "+91 9876543210",
-  "skills": "Java, Spring Boot, SQL",
-  "experience": 5,
-  "resumeUrl": "https://example.com/resume.pdf",
-  "status": "ACTIVE"
-}
-```
+# 2. Features
 
-### Update Candidate
-```json
-{
-  "firstName": "Jane",
-  "lastName": "Doe",
-  "email": "jane.doe@example.com",
-  "phone": "+91 9876543210",
-  "skills": "Java, Spring Boot, Microservices",
-  "experience": 6,
-  "resumeUrl": "https://example.com/resume-2.pdf",
-  "status": "HIRED"
-}
-```
+## Authentication and Security
 
-### Create Job
-```json
-{
-  "title": "Java Developer",
-  "department": "Engineering",
-  "description": "Build and maintain backend services and APIs.",
-  "location": "Hyderabad",
-  "experienceRequired": 3,
-  "employmentType": "FULL_TIME",
-  "status": "OPEN"
-}
-```
+- JWT-based authentication
+- Role-based authorization
+- BCrypt password hashing
+- Google OAuth2 authentication
+- Refresh-token authentication
+- Refresh-token rotation
+- Server-side refresh-session storage
+- Session revocation
+- Logout
+- Logout from all sessions
+- Forgot password
+- Reset password
+- Change password
+- Password validation
+- Failed-login tracking
+- Temporary account lockout
+- Stateless Spring Security configuration
+- CORS configuration
 
-### Update Job
-```json
-{
-  "title": "Senior Java Developer",
-  "department": "Engineering",
-  "description": "Lead backend development and architecture.",
-  "location": "Hyderabad",
-  "experienceRequired": 5,
-  "employmentType": "FULL_TIME",
-  "status": "OPEN"
-}
-```
+## Candidate Management
 
-## Swagger URL
-Open the Swagger UI in your browser:
+- Candidate registration
+- Candidate profile creation
+- Candidate CRUD operations
+- Candidate search
+- Candidate filtering
+- Candidate pagination
+- Candidate status management
+
+## Job Management
+
+- Job creation
+- Job retrieval
+- Job update
+- Job deletion
+- Job filtering
+- Job pagination
+- Department filtering
+- Location filtering
+- Status filtering
+- Employment type management
+
+## Production Readiness
+
+- Spring Boot Actuator
+- Health monitoring
+- Application information endpoint
+- Structured JSON logging
+- Rolling log files
+- Development profile
+- Test profile
+- Production profile
+- Environment-variable based configuration
+- Externalized credentials
+- Externalized JWT secret
+- Externalized OAuth credentials
+- Externalized email credentials
+
+## Documentation and Testing
+
+- Swagger/OpenAPI
+- JUnit
+- Mockito
+- Maven
+- Global exception handling
+- Standardized API responses
+
+---
+
+# 3. Technology Stack
+
+| Technology | Purpose |
+|---|---|
+| Java 17 | Programming language |
+| Spring Boot 3.3.2 | Backend framework |
+| Maven | Build and dependency management |
+| Spring Web | REST APIs |
+| Spring Data JPA | Database access |
+| Hibernate | ORM |
+| PostgreSQL | Database |
+| Spring Security | Authentication and authorization |
+| JWT | Access-token authentication |
+| OAuth2 Client | Google authentication |
+| Spring Boot Actuator | Monitoring and health checks |
+| Spring Boot Mail | Email functionality |
+| Spring Validation | Request validation |
+| Lombok | Boilerplate reduction |
+| Springdoc OpenAPI | Swagger documentation |
+| Logback | Application logging |
+| Logstash Logback Encoder | Structured JSON logging |
+| JUnit | Unit testing |
+| Mockito | Mocking and service testing |
+| Next.js | Frontend application |
+
+---
+
+# 4. Project Structure
+
 ```text
-http://localhost:8080/swagger-ui.html
-```
-
-## Testing Instructions
-```bash
-mvn test
-```
-
-## Future Enhancements
-- Application management
-- Interview scheduling
-- Recruitment pipeline
-- Resume upload
-- Resume parsing
-- AI resume screening
-- Email notifications
-- Recruitment dashboard
-- Docker deployment
-- Role-based advanced permissions
-
-## Notes
-The current version intentionally keeps Candidate and Job independent, while preparing the architecture for a future `Application` entity relationship:
-`Candidate 1 --- * Application * --- 1 Job`
+talent-recruitment-api
+│
+├── src
+│   ├── main
+│   │   ├── java
+│   │   │   └── com
+│   │   │       └── example
+│   │   │           └── talentrecruitment
+│   │   │               │
+│   │   │               ├── auth
+│   │   │               │   ├── controller
+│   │   │               │   ├── dto
+│   │   │               │   ├── entity
+│   │   │               │   ├── repository
+│   │   │               │   └── service
+│   │   │               │
+│   │   │               ├── candidate
+│   │   │               │   ├── controller
+│   │   │               │   ├── dto
+│   │   │               │   ├── entity
+│   │   │               │   ├── repository
+│   │   │               │   └── service
+│   │   │               │
+│   │   │               ├── common
+│   │   │               │   ├── exception
+│   │   │               │   └── ApiResponse.java
+│   │   │               │
+│   │   │               ├── config
+│   │   │               │
+│   │   │               ├── job
+│   │   │               │   ├── controller
+│   │   │               │   ├── dto
+│   │   │               │   ├── entity
+│   │   │               │   ├── repository
+│   │   │               │   └── service
+│   │   │               │
+│   │   │               ├── security
+│   │   │               │
+│   │   │               └── TalentRecruitmentApplication.java
+│   │   │
+│   │   └── resources
+│   │       ├── application.properties
+│   │       ├── application-dev.properties
+│   │       ├── application-test.properties
+│   │       ├── application-prod.properties
+│   │       └── logback-spring.xml
+│   │
+│   └── test
+│       └── java
+│
+├── logs
+├── target
+├── pom.xml
+└── README.md
