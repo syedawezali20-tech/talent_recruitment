@@ -1,6 +1,9 @@
 package com.example.talentrecruitment.config;
 
+import com.example.talentrecruitment.security.GoogleOAuth2FailureHandler;
+import com.example.talentrecruitment.security.GoogleOAuth2SuccessHandler;
 import com.example.talentrecruitment.security.JwtAuthenticationFilter;
+
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.context.annotation.Bean;
@@ -18,7 +21,6 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.http.SessionCreationPolicy;
 
 import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import org.springframework.security.web.SecurityFilterChain;
@@ -37,21 +39,34 @@ import java.util.List;
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+
     private final UserDetailsService userDetailsService;
 
+    private final GoogleOAuth2SuccessHandler googleOAuth2SuccessHandler;
+
+    private final GoogleOAuth2FailureHandler googleOAuth2FailureHandler;
+
+    private final PasswordEncoder passwordEncoder;
+
+
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http)
+            throws Exception {
 
         http
-                // Enable CORS for Next.js frontend
-                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                // CORS
+                .cors(cors ->
+                        cors.configurationSource(corsConfigurationSource())
+                )
 
-                // Disable CSRF because we are using JWT
+                // Disable CSRF because JWT is used
                 .csrf(csrf -> csrf.disable())
 
-                // JWT authentication is stateless
+                // Stateless JWT authentication
                 .sessionManagement(session ->
-                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                        session.sessionCreationPolicy(
+                                SessionCreationPolicy.STATELESS
+                        )
                 )
 
                 // Authorization rules
@@ -68,35 +83,54 @@ public class SecurityConfig {
                         .requestMatchers(
                                 HttpMethod.POST,
                                 "/api/auth/register",
-                                "/api/auth/login"
+                                "/api/auth/login",
+                                "/api/auth/candidate/register",
+                                "/api/auth/forgot-password",
+                                "/api/auth/reset-password",
+                                "/api/auth/logout",
+                                "/api/auth/refresh"
                         ).permitAll()
 
-                        // Candidate APIs
+                        // Google OAuth2
+                        .requestMatchers(
+                                "/oauth2/**",
+                                "/login/oauth2/**"
+                        ).permitAll()
+
+                        // Actuator health endpoint
+                        .requestMatchers(
+                                "/actuator/health"
+                        ).permitAll()
+
+                        // Candidate and Job GET APIs
                         .requestMatchers(
                                 HttpMethod.GET,
                                 "/api/candidates/**",
                                 "/api/jobs/**"
                         ).authenticated()
 
+                        // Candidate and Job POST APIs
                         .requestMatchers(
                                 HttpMethod.POST,
                                 "/api/candidates/**",
                                 "/api/jobs/**"
                         ).authenticated()
 
+                        // Candidate and Job PUT APIs
                         .requestMatchers(
                                 HttpMethod.PUT,
                                 "/api/candidates/**",
                                 "/api/jobs/**"
                         ).authenticated()
 
+                        // Candidate and Job DELETE APIs
                         .requestMatchers(
                                 HttpMethod.DELETE,
                                 "/api/candidates/**",
                                 "/api/jobs/**"
                         ).authenticated()
 
-                        // Everything else requires authentication
+                        // Everything else
                         .anyRequest().authenticated()
                 )
 
@@ -107,6 +141,17 @@ public class SecurityConfig {
                 .addFilterBefore(
                         jwtAuthenticationFilter,
                         UsernamePasswordAuthenticationFilter.class
+                )
+
+                // Google OAuth2
+                .oauth2Login(oauth2 ->
+                        oauth2
+                                .successHandler(
+                                        googleOAuth2SuccessHandler
+                                )
+                                .failureHandler(
+                                        googleOAuth2FailureHandler
+                                )
                 );
 
         return http.build();
@@ -115,21 +160,20 @@ public class SecurityConfig {
 
     /**
      * CORS configuration
-     *
-     * Allows the Next.js frontend running on port 3000
-     * to communicate with Spring Boot running on port 8080.
      */
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
 
-        CorsConfiguration configuration = new CorsConfiguration();
+        CorsConfiguration configuration =
+                new CorsConfiguration();
 
-        // Next.js frontend
         configuration.setAllowedOrigins(
-                List.of("http://localhost:3000")
+                List.of(
+                        "http://localhost:3000",
+                        "http://192.168.30.11:3000"
+                )
         );
 
-        // HTTP methods allowed from frontend
         configuration.setAllowedMethods(
                 List.of(
                         "GET",
@@ -140,12 +184,10 @@ public class SecurityConfig {
                 )
         );
 
-        // Allow request headers such as Authorization and Content-Type
         configuration.setAllowedHeaders(
                 List.of("*")
         );
 
-        // Allow credentials
         configuration.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source =
@@ -166,8 +208,13 @@ public class SecurityConfig {
         DaoAuthenticationProvider authProvider =
                 new DaoAuthenticationProvider();
 
-        authProvider.setUserDetailsService(userDetailsService);
-        authProvider.setPasswordEncoder(passwordEncoder());
+        authProvider.setUserDetailsService(
+                userDetailsService
+        );
+
+        authProvider.setPasswordEncoder(
+                passwordEncoder
+        );
 
         return authProvider;
     }
@@ -179,12 +226,5 @@ public class SecurityConfig {
     ) throws Exception {
 
         return config.getAuthenticationManager();
-    }
-
-
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-
-        return new BCryptPasswordEncoder();
     }
 }

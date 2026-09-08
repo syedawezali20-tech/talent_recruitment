@@ -53,4 +53,5 @@ public class Job {
     @UpdateTimestamp
     @Column(nullable = false)
     private LocalDateTime updatedAt;
+
 }

@@ -391,4 +391,23 @@ public class CandidateController {
                         "Candidate deleted successfully",
                         null));
     }
+
+
+    // ============================================================
+    // DEBUGGING PRACTICE
+    // ============================================================
+
+    @GetMapping("/debug-candidate")
+    public String debugCandidate(@RequestParam int id) {
+
+        System.out.println("ID received: " + id);
+
+        if (id < 0) {
+            throw new IllegalArgumentException(
+                    "Candidate ID must be greater than 0"
+            );
+        }
+
+        return "Candidate ID: " + id;
+    }
 }
